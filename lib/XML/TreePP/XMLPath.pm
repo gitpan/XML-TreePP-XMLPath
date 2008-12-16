@@ -189,7 +189,6 @@ use strict;
 use warnings;
 use Exporter;
 use Params::Validate qw(:all);
-use Pod::Usage;
 use XML::TreePP;
 
 BEGIN {
@@ -202,7 +201,7 @@ BEGIN {
     $REF_NAME   = "XML::TreePP::XMLPath";  # package name
 
     use vars      qw( $VERSION );
-    $VERSION    = '0.50';
+    $VERSION    = '0.51';
 }
 
 =pod

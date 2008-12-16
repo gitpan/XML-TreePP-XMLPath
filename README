@@ -1,4 +1,4 @@
-XML-TreePP-XMLPath version 0.50
+XML-TreePP-XMLPath version 0.51
 ===============================
 
 A Pure PERL extension to Pure PERL XML::TreePP module to support paths to XML
@@ -59,6 +59,7 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
   XML::TreePP
+  Params::Validate
 
 
 COPYRIGHT AND LICENCE
