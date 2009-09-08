@@ -42,6 +42,34 @@ Iterate through all attributes and Elements of each <item> XML element:
         }
     }
 
+EXAMPLE for using XML::TreePP::XMLPath to access a non-XML compliant tree of
+PERL referenced data.
+
+    use XML::TreePP::XMLPath;
+    
+    my $tppx = new XML::TreePP::XMLPath;
+    my $hashtree = {
+        config => {
+            nodes => {
+                "10.0.10.5" => {
+                    options => [ 'option1', 'option2' ],
+                    alerts => {
+                        email => 'someone@nowhere.org'
+                    }
+                }
+            }
+        }
+    };
+    print $tppx->filterXMLDoc($hashtree, '/config/nodes/10.0.10.5/alerts/email');
+    print "\n";
+    print $tppx->filterXMLDoc($hashtree, '/config/nodes/10.0.10.5/options')->[1];
+    print "\n";
+
+Result
+    
+    someone@nowhere.org
+    option2
+
 =head1 DESCRIPTION
 
 A pure PERL module to compliment the pure PERL XML::TreePP module. XMLPath may
@@ -57,6 +85,11 @@ of XPath is that XML::TreePP::XMLPath is an accessor to XML::TreePP parsed
 XML Documents. If you are already using XML::TreePP to parse XML, you can use
 XML::TreePP::XMLPath to access nodes inside that parsed XML Document without
 having to convert it into a raw XML Document.
+
+As an additional side-benefit, any PERL HASH/ARRY reference data structure can
+be accessible via the XPath accessor method provided by this module. It does
+not have to a parsed XML structure. The last example in the SYNOPSIS illustrates
+this.
 
 =head1 REQUIREMENTS
 
@@ -277,7 +310,7 @@ BEGIN {
     $REF_NAME   = "XML::TreePP::XMLPath";  # package name
 
     use vars      qw( $VERSION $DEBUG $TPPKEYS );
-    $VERSION    = '0.55';
+    $VERSION    = '0.56';
     $DEBUG      = 0;
     $TPPKEYS    = "force_array force_hash cdata_scalar_ref user_agent http_lite lwp_useragent base_class elem_class xml_deref first_out last_out indent xml_decl output_encoding utf8_flag attr_prefix text_node_key ignore_error use_ixhash";
 }
@@ -1734,7 +1767,7 @@ sub getAttributes (@) {
     my $path        = shift || undef;
     my $subtree;
     if (defined $path) {
-        $subtree = getSubtree($tree,$path);
+        $subtree = filterXMLDoc($tree,$path);
     } else {
         $subtree = $tree;
     }
@@ -1820,7 +1853,7 @@ sub getElements (@) {
     my $path        = shift || undef;
     my $subtree;
     if (defined $path) {
-        $subtree = getSubtree($tree,$path);
+        $subtree = filterXMLDoc($tree,$path);
     } else {
         $subtree = $tree;
     }
@@ -2467,9 +2500,11 @@ Russell E Glaue, http://russ.glaue.org
 
 C<XML::TreePP>
 
+XML::TreePP::XMLPath on Codepin: http://www.codepin.org/project/perlmod/XML-TreePP-XMLPath
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008 Center for the Application of Information Technologies.
+Copyright (c) 2008-2009 Center for the Application of Information Technologies.
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under
