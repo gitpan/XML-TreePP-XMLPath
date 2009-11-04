@@ -309,10 +309,10 @@ BEGIN {
     $REF_NAME   = "XML::TreePP::XMLPath";  # package name
 
     use vars      qw( $VERSION $TPPKEYS );
-    $VERSION    = '0.60';
+    $VERSION    = '0.61';
     $TPPKEYS    = "force_array force_hash cdata_scalar_ref user_agent http_lite lwp_useragent base_class elem_class xml_deref first_out last_out indent xml_decl output_encoding utf8_flag attr_prefix text_node_key ignore_error use_ixhash";
 
-    use vars      qw( $DEBUG $DEBUG $DEBUGMETHOD $DEBUGNODE $DEBUGPATH $DEBUGFILTER $DEBUGDUMP);
+    use vars      qw($DEBUG $DEBUGMETHOD $DEBUGNODE $DEBUGPATH $DEBUGFILTER $DEBUGDUMP);
     $DEBUG          = 0;
     $DEBUGMETHOD    = 1;
     $DEBUGNODE      = 2;
@@ -966,17 +966,18 @@ definitive XMLPath (mapped from the root) to the found targets, which includes:
         }] }]
     }
 
-ParentMap - Return a Map of the entire xml document, which includes:
+ParentMap - Return a Map of the parent nodes to found target nodes in the xml
+document, which includes:
 (1) a reference map from each parent node to all matching child nodes
 (2) a reference to xml document fragments from the parent nodes
 
     [
     { root      => HASHREF,
-      path      => '/nodename[#]/nodename[6]',
+      path      => '/nodename[#]/nodename[6]/targetname',
       child => [{ name => nodename, position => 6, target => targetname }]
     },
     { root      => HASHREF,
-      path      => '/nodename[#]/nodename[7]',
+      path      => '/nodename[#]/nodename[7]/targetname',
       child => [{ name => nodename, position => 7, target => targetname }]
     },
     ]
@@ -1341,18 +1342,19 @@ sub filterXMLDoc (@) {
             print ( pp({ xmlfragment => $xmltree }) . "\n");
         }
 
+        my (@found,@maps);
         #print (" "x8, "searching begins on node with nodemap:", pp ($thisnodemap) if $DEBUG > 5;
         # If there are no more path to analyze, return
         if ((ref($xmlpath) ne "ARRAY") || (! @{$xmlpath} >= 1)) {
             print (" "x12,"= end of path reached\n") if $DEBUG >= $DEBUGPATH;
             # FOUND: XMLPath is satisfied, Return $xmltree as a found target
             $thisnodemap->{'target'} = undef;
-            return $xmltree;
+            push(@found, $xmltree);
         }
 
         # Otherwise, we have more path to analyze - @{$xmlpath} is >= 1
 
-        my (@found,@maps);
+        if (@found == 0) {
         if (! ref($xmltree)) {
             print ("-"x12,"= search tree is TEXT (non-REF)\n") if $DEBUG >= $DEBUGPATH;
             # This should almost always return undef
@@ -1550,6 +1552,7 @@ sub filterXMLDoc (@) {
             } else {
                 push(@found,$result) unless !defined $result;
             }
+        }
         }
         #print (" "x8, "searching ended on node with nodemap:", pp ($thisnodemap) if $DEBUG > 5;
         return undef if @found == 0;

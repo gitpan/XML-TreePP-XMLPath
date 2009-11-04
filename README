@@ -1,4 +1,4 @@
-XML-TreePP-XMLPath version 0.60
+XML-TreePP-XMLPath
 ===============================
 
 A pure PERL module to compliment the pure PERL XML::TreePP module. XMLPath may
@@ -102,6 +102,11 @@ This module requires these other modules and libraries:
 
   XML::TreePP
   Data::Dump
+
+
+SUPPORT AND DOCUMENTATION
+
+    http://www.codepin.org/project/perlmod/XML-TreePP-XMLPath
 
 
 COPYRIGHT AND LICENSE
