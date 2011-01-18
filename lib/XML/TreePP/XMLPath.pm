@@ -102,6 +102,8 @@ The following perl modules are depended on by this module:
 
 =item *     Data::Dump
 
+=item *     Data::Dumper
+
 =back
 
 =head1 IMPORTABLE METHODS
@@ -297,7 +299,11 @@ use warnings;
 use Exporter;
 use Carp;
 use XML::TreePP;
-use Data::Dump qw(pp);
+use Data::Dump;
+use Data::Dumper;
+$Data::Dumper::Indent = 0;
+$Data::Dumper::Purity = 1;
+$Data::Dumper::Terse = 1;
 
 BEGIN {
     use vars      qw(@ISA @EXPORT @EXPORT_OK);
@@ -309,7 +315,7 @@ BEGIN {
     $REF_NAME   = "XML::TreePP::XMLPath";  # package name
 
     use vars      qw( $VERSION $TPPKEYS );
-    $VERSION    = '0.62';
+    $VERSION    = '0.63';
     $TPPKEYS    = "force_array force_hash cdata_scalar_ref user_agent http_lite lwp_useragent base_class elem_class xml_deref first_out last_out indent xml_decl output_encoding utf8_flag attr_prefix text_node_key ignore_error use_ixhash";
 
     use vars      qw($DEBUG $DEBUGMETHOD $DEBUGNODE $DEBUGPATH $DEBUGFILTER $DEBUGDUMP);
@@ -1030,7 +1036,7 @@ sub filterXMLDoc (@) {
               else { if (!defined $tpp) { $tpp = $self ? $self->tpp() : tpp(); }
                      $xtree = $tpp->parse($tree);
                    }
-    if (ref $path) { $xpath = eval (pp($path)); # make a copy of inputted parsed XMLPath
+    if (ref $path) { $xpath = eval (Dumper($path)); # make a copy of inputted parsed XMLPath
                    }
               else { $xpath = parseXMLPath($path);
                    }
@@ -1519,8 +1525,8 @@ sub filterXMLDoc (@) {
                         # print (" "x20, "filtering child node:", pp({ sub => $sub, target => $xmlpath->[0]->[0] }) if $DEBUG > 5;
                         $xmlpos++;
                         my ($mresult,$childmap);
-                        my $tmpfilters = eval( pp($filters) );
-                        my $tmpxmlpath = eval( pp($xmlpath) );
+                        my $tmpfilters = eval( Dumper($filters) );
+                        my $tmpxmlpath = eval( Dumper($xmlpath) );
                         my ($bc_clone);
                         if (   ((!ref($sub)) && ($sub =~ /\w+/))
                             && (   ((ref($xmlpath) eq "ARRAY") && (@{$xmlpath} == 1))
@@ -1568,7 +1574,7 @@ sub filterXMLDoc (@) {
     # ( $parent, ($child ."/". $target) ) = $pathsplit->(parsed XML::TreePP::XMLPath)
     my $pathsplit = sub ($) {
         my $parent_path = shift;
-        $parent_path = eval(pp($parent_path));
+        $parent_path = eval(Dumper($parent_path));
         my ($child_path,$string_element); # string_element is #text or @attribute if exists in path
         if (   ($whatisnode->($parent_path->[ (@{$parent_path}-1) ]->[0]) eq "text")
             || ($whatisnode->($parent_path->[ (@{$parent_path}-1) ]->[0]) eq "attribute") ) {
@@ -1601,7 +1607,7 @@ sub filterXMLDoc (@) {
         my $p_path = $mapAssemble->($rootmap);              # assemble the absolute XMLPaths to all targets to parent nodes
         foreach my $p_xtree (@{$p_found}) {                 # search each parent xml document fragment for its child nodes
             my $parentmap = { root => $p_xtree, path => (shift(@{$p_path})) };  # create the map for the parent node
-            my $tmpc_xpath = eval(pp($c_xpath));                                # make a copy of the child XMLPath
+            my $tmpc_xpath = eval(Dumper($c_xpath));                            # make a copy of the child XMLPath
             if (($DEBUG >= 1) && ($DEBUG <= 5)) {
                 print ("-"x11,"# Searching for the child path within the parent node." . "\n");
             }
@@ -1620,9 +1626,9 @@ sub filterXMLDoc (@) {
         print ("-"x11,"# Search yielded results." . "\n") if defined $thismap || defined $found;
     }
     if (($DEBUG) && (defined $thismap)) {
-        print pp { structure => $o_structure, thismap => $thismap };
+        print pp({ structure => $o_structure, thismap => $thismap });
     } elsif (($DEBUG) && (defined $found)) {
-        print pp { structure => $o_structure, results => $found };
+        print pp({ structure => $o_structure, results => $found });
     }
 
     if (($o_structure =~ /^RootMap$/i) || ($o_structure =~ /^ParentMap$/i)) {
@@ -1730,7 +1736,7 @@ sub getValues (@) {
               else { if (!defined $tpp) { $tpp = $self ? $self->tpp() : tpp(); }
                      $xtree = $tpp->parse($tree);
                    }
-    if (ref $path) { $xpath = eval (pp($path)); # make a copy of inputted parsed XMLPath
+    if (ref $path) { $xpath = eval (Dumper($path)); # make a copy of inputted parsed XMLPath
                    }
               else { $xpath = parseXMLPath($path);
                    }
@@ -1754,22 +1760,23 @@ sub getValues (@) {
     # for debugging purposes
     print (" "x8, "=Found at var's path: ", pp( $results ),"\n") if $DEBUG >= $DEBUGDUMP;
 
-    my $getVal = sub ($) {};
-    $getVal = sub ($) {
+    my $getVal = sub ($$) {};
+    $getVal = sub ($$) {
         print ("="x8,"sub::getValues|getVal->()\n") if $DEBUG >= $DEBUGMETHOD;
+        my $v_ret_type = shift;
         my $treeNodes = shift;
         print (" "x8,"getVal->():from> ",pp($treeNodes)) if $DEBUG >= $DEBUGDUMP;
         print (" - '",ref($treeNodes)||'string',"'\n") if $DEBUG >= $DEBUGDUMP;
         my @results;
         if (ref($treeNodes) eq "HASH") {
-            my $utreeNodes = eval ( pp($treeNodes) ); # make a copy for the result set
+            my $utreeNodes = eval ( Dumper($treeNodes) ); # make a copy for the result set
             push (@results, $utreeNodes->{$xml_text_id}) if exists $utreeNodes->{$xml_text_id} && $v_ret_type =~ /s/;
             delete $utreeNodes->{$xml_text_id} if exists $utreeNodes->{$xml_text_id} && $v_ret_type =~ /[x,p]/;
             push (@results, $utreeNodes) if $v_ret_type =~ /p/;
             push (@results, $tpp->write($utreeNodes)) if $v_ret_type =~ /x/;
         } elsif (ref($treeNodes) eq "ARRAY") {
             foreach my $item (@{$treeNodes}) {
-                my $r1 = $getVal->($item);
+                my $r1 = $getVal->($v_ret_type,$item);
                 foreach my $r2 (@{$r1}) {
                     push(@results,$r2) if defined $r2;
                 }
@@ -1784,7 +1791,7 @@ sub getValues (@) {
         $tpp->set( xml_decl => $old_prop_xml_decl );
     }
 
-    my $found = $getVal->($results);
+    my $found = $getVal->($v_ret_type,$results);
     $found = [$found] if ref $found ne "ARRAY";
 
     if ($v_trim) {
@@ -2883,7 +2890,7 @@ XML::TreePP::XMLPath on Codepin: http://www.codepin.org/project/perlmod/XML-Tree
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008-2009 Center for the Application of Information Technologies.
+Copyright (c) 2008-2011 Russell E Glaue, Center for the Application of Information Technologies.
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under
